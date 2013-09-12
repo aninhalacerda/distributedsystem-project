@@ -14,7 +14,6 @@ import org.jgroups.util.Util;
 public class SimpleChat extends ReceiverAdapter {
 	
 	JChannel channel;
-	JChannel channel2;
     String user_name;
     
     final List<String> state=new LinkedList<String>();
@@ -24,7 +23,8 @@ public class SimpleChat extends ReceiverAdapter {
 	}
     
     public void viewAccepted(View new_view) {
-        System.out.println("** view: " + new_view);
+        System.out.println("** view: " + new_view + " | users:"+ new_view.getMembers().size());
+        
     }
 
     public void receive(Message msg) {
@@ -68,10 +68,9 @@ public class SimpleChat extends ReceiverAdapter {
         if (receiver == null) {
         	channel.setReceiver(this); 
     	}
+        channel.setName(user_name);
         channel.connect(group);
         channel.getState(null, 10000);
-        Draw draw = new Draw(channel);
-        draw.go();
     }
     
 	public void connectDraw() throws Exception {

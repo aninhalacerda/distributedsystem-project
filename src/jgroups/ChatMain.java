@@ -20,13 +20,7 @@ public class ChatMain {
 			chats.put(user, new SimpleChat(user));
 		}
 		
-//		SimpleChatReceiver receiver = chatsReceiver.get(groupID);
-//		if (receiver == null) {
-//			receiver = new SimpleChatReceiver();
-//		}
 		chats.get(user).connect(groupID, null);
-//		ChatDialog dialog = new ChatDialog(chats.get(user), receiver);
-//		dialog.showDialog();
 	}
 	
 	public static void main(String[] args) {
