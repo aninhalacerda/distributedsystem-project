@@ -48,7 +48,7 @@ public class KafkaConsumerGroup {
  
     private static ConsumerConfig createConsumerConfig(String a_zookeeper, String a_groupId) {
         Properties props = new Properties();
-        props.put("zookeeper.connect", a_zookeeper);
+        props.put("broker.list", "0:186.214.132.146:9082");
         props.put("group.id", a_groupId);
         props.put("zookeeper.session.timeout.ms", "400");
         props.put("zookeeper.sync.time.ms", "200");
@@ -67,7 +67,7 @@ public class KafkaConsumerGroup {
         example.run(threads);
  
         try {
-            Thread.sleep(100000);
+            Thread.sleep(10000);
         } catch (InterruptedException ie) {
         	System.out.println("Deu aguia!");
         }

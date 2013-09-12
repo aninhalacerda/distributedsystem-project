@@ -17,6 +17,7 @@ import java.util.List;
 import org.jgroups.Address;
 import org.jgroups.JChannel;
 import org.jgroups.Message;
+import org.jgroups.Message.Flag;
 import org.jgroups.ReceiverAdapter;
 import org.jgroups.View;
 import org.jgroups.util.Util;
@@ -33,7 +34,7 @@ public class ChatJGroups extends ReceiverAdapter {
     JChannel channel;
     String user_name=System.getProperty("user.name", "n/a");
     String output;
-    int count = 0;
+    short count = 0;
     
     final List<String> state=new LinkedList<String>();
 
@@ -43,7 +44,7 @@ public class ChatJGroups extends ReceiverAdapter {
 
     public void receive(Message msg) {
     	try {
-			logReceive();
+			logReceive(msg);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -111,7 +112,8 @@ public class ChatJGroups extends ReceiverAdapter {
                 } else if(line.startsWith(MESSAGE_ALL)) {
 	                line=line.substring(MESSAGE_ALL.length()).trim();
 	                Message msg=new Message(null, null, line);
-	                logSend();
+					msg.setFlag(count++);
+	                logSend(msg);
 	                channel.send(msg);
                 } else if (line.startsWith(NODES)) {
                 	String txt = "[" + channel.getView().getMembers().size() + "] ";
@@ -126,7 +128,8 @@ public class ChatJGroups extends ReceiverAdapter {
 					for (Address a : channel.getView().getMembers()) {
 						if (a.toString().equals(dst)) {
 							Message msg=new Message(a, null, txt);
-							logSend();
+							msg.setFlag(count++);
+							logSend(msg);
 							channel.send(msg);
 						}
 					}
@@ -142,7 +145,7 @@ public class ChatJGroups extends ReceiverAdapter {
     public void executeTestFile(String inputfile) throws Exception {
     	List<Message> msgs = readInputFile(inputfile);
     	for (Message m : msgs) {
-    		logSend();
+    		logSend(m);
 			channel.send(m);
     	}
     }
@@ -168,8 +171,9 @@ public class ChatJGroups extends ReceiverAdapter {
 						ad_receiver = a;
 					}
 				}
-				
-				params.add(new Message(ad_receiver, null, msg));
+				Message m = new Message(ad_receiver, null, msg);
+				m.setFlag((short) params.size());
+				params.add(m);
 			}
 
 		} catch (Exception e) {
@@ -186,14 +190,14 @@ public class ChatJGroups extends ReceiverAdapter {
 	}
 
 
-	private void logSend() throws IOException {
-		String log = "SEND " + count + " " + user_name + " : " + Calendar.getInstance().getTimeInMillis()+ "\n";
+	private void logSend(Message m) throws IOException {
+		String log = "SEND " + m.getFlags() + " " + user_name + " : " + Calendar.getInstance().getTimeInMillis()+ "\n";
 		Path path = Paths.get(output);
 	    Files.write(path, log.getBytes(), StandardOpenOption.APPEND);
 	}
 	
-	private void logReceive() throws IOException {
-		String log = "RECE " + user_name + " : " + Calendar.getInstance().getTimeInMillis()+ "\n";
+	private void logReceive(Message m) throws IOException {
+		String log = "RECE " + m.getFlags() + " " + user_name + " : " + Calendar.getInstance().getTimeInMillis()+ "\n";
 		Path path = Paths.get(output);
 	    Files.write(path, log.getBytes(), StandardOpenOption.APPEND);
 	}
