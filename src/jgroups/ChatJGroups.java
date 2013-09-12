@@ -112,7 +112,7 @@ public class ChatJGroups extends ReceiverAdapter {
                 } else if(line.startsWith(MESSAGE_ALL)) {
 	                line=line.substring(MESSAGE_ALL.length()).trim();
 	                Message msg=new Message(null, null, line);
-					msg.setFlag(count++);
+	                msg.setFlag(count++);
 	                logSend(msg);
 	                channel.send(msg);
                 } else if (line.startsWith(NODES)) {
