@@ -3,11 +3,14 @@ distributedsystem-project
 
 INSTALATION
 
-Download the two follows jar:
+First, make sure Java is running OK!
+
+Download jar file:
+
 https://www.dropbox.com/s/567oa9yr27qql6e/jgroups-sd.jar
 http://downloads.sourceforge.net/project/javagroups/JGroups/3.4.0.Alpha3/jgroups-3.4.0.Alpha3.jar
 
-Add to classpath:
+Add both files to your classpath:
 $ export CLASSPATH=$CLASSPATH:path_to_jar
 
 
