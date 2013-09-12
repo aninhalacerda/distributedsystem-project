@@ -1,12 +1,15 @@
 package jgroups;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
@@ -20,6 +23,7 @@ import org.jgroups.util.Util;
 
 public class ChatJGroups extends ReceiverAdapter {
 
+	final String SEPARADOR = "\\|";
 	final String MESSAGE_ALL = "-a";
 	final String MESSAGE = "-m";
 	final String NODES = "-n";
@@ -29,6 +33,7 @@ public class ChatJGroups extends ReceiverAdapter {
     JChannel channel;
     String user_name=System.getProperty("user.name", "n/a");
     String output;
+    int count = 0;
     
     final List<String> state=new LinkedList<String>();
 
@@ -79,7 +84,7 @@ public class ChatJGroups extends ReceiverAdapter {
         }
     }
 
-    private void start(String user, String output) throws Exception {
+    private void start(String user, String output, String inputfile) throws Exception {
     	this.output = output;
     	this.user_name = user;
     	channel=new JChannel(getClass().getClassLoader().getResourceAsStream("udp.xml"));
@@ -87,10 +92,14 @@ public class ChatJGroups extends ReceiverAdapter {
         channel.setName(user);
         channel.connect("ChatCluster");
         channel.getState(null, 10000);
-        eventLoop();
-        channel.close();
+        if (inputfile == null) {
+        	eventLoop();
+        	channel.close();
+        } else {
+        	executeTestFile(inputfile);
+        }
     }
-
+    
     private void eventLoop() {
         BufferedReader in=new BufferedReader(new InputStreamReader(System.in));
         while(true) {
@@ -129,10 +138,56 @@ public class ChatJGroups extends ReceiverAdapter {
             }
         }
     }
+    
+    public void executeTestFile(String inputfile) throws Exception {
+    	List<Message> msgs = readInputFile(inputfile);
+    	for (Message m : msgs) {
+    		logSend();
+			channel.send(m);
+    	}
+    }
+    private List<Message> readInputFile(String inputfile) {
+		List<Message> params = new ArrayList<Message>();
+
+		BufferedReader bufferedReader = null;
+		try {
+			bufferedReader = new BufferedReader(new FileReader(new File(
+					inputfile)));
+
+			while (bufferedReader.ready()) {
+				String line = bufferedReader.readLine();
+				String[] campos = line.split(SEPARADOR);
+
+				String receiver = campos[1];
+				String msg = campos[2];
+				
+				Address ad_receiver = null;
+
+				for (Address a : channel.getView().getMembers()) {
+					if (!receiver.equals("all") && a.toString().equals(receiver)) {
+						ad_receiver = a;
+					}
+				}
+				
+				params.add(new Message(ad_receiver, null, msg));
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (bufferedReader != null) {
+				try {
+					bufferedReader.close();
+				} catch (IOException e) {
+				}
+			}
+		}
+		return params;
+	}
 
 
 	private void logSend() throws IOException {
-		String log = "SEND " + user_name + " : " + Calendar.getInstance().getTimeInMillis()+ "\n";
+		String log = "SEND " + count + " " + user_name + " : " + Calendar.getInstance().getTimeInMillis()+ "\n";
 		Path path = Paths.get(output);
 	    Files.write(path, log.getBytes(), StandardOpenOption.APPEND);
 	}
@@ -155,11 +210,12 @@ public class ChatJGroups extends ReceiverAdapter {
 
 	public static void main(String[] args) throws Exception {
 		if (args.length == 0) {
-			System.out.println("Usage: java -Djava.net.preferIPv4Stack=true -Djgrous.bind_address=ip jgroups.ChatJGroups user_name output_filename");
+			System.out.println("Usage: java -Djava.net.preferIPv4Stack=true -Djgrous.bind_address=ip jgroups.ChatJGroups user_name output_filename [input_filename]");
 		} else {
 			String user = args[0];
 			String output = args[1];
-			new ChatJGroups().start(user, output);
+			String inputfile = args.length == 3? args[2] : null;
+			new ChatJGroups().start(user, output, inputfile);
 		}
     }
 }
